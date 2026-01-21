@@ -75,6 +75,45 @@ BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
 
 //}
 
+bool	valid_value(const std::string &value_str)
+{
+	int	dot = 0;
+	size_t	i;
+
+	(value_str[0] == '+' || value_str[0] == '-') ? i = 1 : i = 0;
+	while (i < value_str.length())
+	{
+		if (!std::isdigit(value_str[i]))
+		{
+			//if (value_str[i] == '.' && dot < 1)
+			if (value_str[i] == '.' && dot < 1)
+				dot++;
+			else 
+			{
+				std::cerr << "Error: invalid number format => " << value_str << std::endl;
+				return false;
+			}
+		}
+		i++;
+	}
+
+	errno = 0;
+	float	nb = std::strtof(value_str.c_str(), NULL);
+	if (nb < 0)
+	{
+		std::cerr << "Error: not a positive number." << std::endl;
+		return false;
+	}
+	if (errno == ERANGE || nb > 1000)
+	{
+		std::cerr << "Error: too large a number." << std::endl;
+		return false;
+	}
+	std::cout << "good nb =" << nb << std::endl;
+	return true;
+	
+}
+
 bool	valid_date(const std::string &date_str)
 {
 	//std::cout << "string = " << date_str << std::endl;
@@ -142,12 +181,16 @@ void	BitcoinExchange::fromFile(const char *input_file)
 			continue;
 		}
 		std::string	date = line.substr(0, pos);
-		std::string	nb = line.substr(pos + 3);
+		std::string	value = line.substr(pos + 3);
 		
 		if (!valid_date(date))
 		{
 
 			std::cerr << "Error: invalid date =>" << date <<std::endl;
+			continue;
+		}
+		if (!valid_value(value))
+		{
 			continue;
 		}
 
