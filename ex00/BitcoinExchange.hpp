@@ -19,7 +19,7 @@ public:
 
 
 	//BitcoinExchange(const std::string &input_file);
-	void	fromFile(const std::string &input_file);
+	void	fromFile(const char *input_file);
 	
 };
 
