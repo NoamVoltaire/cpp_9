@@ -8,9 +8,11 @@
 class BitcoinExchange
 {
 private:
-	std::map<std::string, double> data_set;
+	std::map<std::string, float> data_set;
 
 	bool	set_btc_dataset(const char *path);
+	float	exchanger(const std::string &date, const char *value) const;
+	std::map<std::string, float>::const_iterator	find_date_or_lower(const std::string &date) const;
 public:
 	BitcoinExchange();
 	~BitcoinExchange();

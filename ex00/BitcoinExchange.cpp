@@ -1,7 +1,9 @@
 #include "BitcoinExchange.hpp"
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 
 bool	BitcoinExchange::set_btc_dataset(const char *path)
@@ -22,13 +24,13 @@ bool	BitcoinExchange::set_btc_dataset(const char *path)
 		size_t	pos = line.find(",");
 		if (pos == std::string::npos)
 			continue;
-		std::string	date = line.substr(0, pos - 1);
+		std::string	date = line.substr(0, pos);
 		std::string	valuestr = line.substr(pos + 1);
 
-		double	value = std::atof(valuestr.c_str());
+		float	value = std::atof(valuestr.c_str());
 		data_set[date] = value;
 	}
-	std::cout << "THIS IS IT " << this->data_set.cbegin()->first << " and " << this->data_set.cbegin()->second << std::endl;
+	//std::cout << "THIS IS IT " << this->data_set.cbegin()->first << " and " << this->data_set.cbegin()->second << std::endl;
 	//std::cout << "THIS IS IT " << this->data_set.begin()->first << this->data_set.begin()->second << std::endl;
 
 	file.close();
@@ -38,28 +40,29 @@ bool	BitcoinExchange::set_btc_dataset(const char *path)
 BitcoinExchange::BitcoinExchange()
 {
 	if (!set_btc_dataset("data.csv"))
-		std::cerr << "uh oh"  << std::endl;
+		throw std::runtime_error("Error : data.csv is not valid") ;
+		//std::cerr << "uh oh"  << std::endl;
 		//throw error;
-	std::cout << "BitcoinExchange: Default constructor called" << std::endl;
+	//std::cout << "BitcoinExchange: Default constructor called" << std::endl;
 }
 
 BitcoinExchange::~BitcoinExchange()
 {
-	std::cout << "BitcoinExchange: Destructor called" << std::endl;
+	//std::cout << "BitcoinExchange: Destructor called" << std::endl;
 }
 
 BitcoinExchange::BitcoinExchange(const BitcoinExchange &other)
 {
-	std::cout << "BitcoinExchange: Copy constructor called" << std::endl;
+	//std::cout << "BitcoinExchange: Copy constructor called" << std::endl;
 	*this = other;
 }
 
 BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
 {
-	std::cout << "BitcoinExchange: Copy assignment operator called" << std::endl;
+	//std::cout << "BitcoinExchange: Copy assignment operator called" << std::endl;
 	if (this != &other)
 	{
-		// Copy members here
+		this->data_set = other.data_set;
 	}
 	return *this;
 }
@@ -75,7 +78,48 @@ BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
 
 //}
 
-bool	valid_value(const std::string &value_str)
+std::map<std::string, float>::const_iterator	BitcoinExchange::find_date_or_lower(const std::string &date) const
+{
+	std::map<std::string, float>::const_iterator it = data_set.lower_bound(date);
+
+	if (it != data_set.end() && it->first == date)
+		return (it);
+	else if (it == data_set.begin())
+		it = data_set.end();
+	else
+		--it;
+	return (it);
+
+}
+
+
+float	BitcoinExchange::exchanger(const std::string &date, const char *value) const
+{
+	std::map<std::string, float>::const_iterator it = find_date_or_lower(date);
+	
+	if (it == data_set.end())
+		return (-1);
+	else
+		return (it->second * std::strtof(value, NULL));
+}
+
+//float	BitcoinExchange::exchanger(const std::string &date, const std::string &value) const
+//{
+//	std::map<std::string, float>::const_iterator it = data_set.lower_bound(date);
+//
+//	if (it->first == date)
+//		return (data_set.at(date) * std::strtof(value.c_str(),NULL));
+//	else if (it == data_set.begin())
+//		return (-1);
+//	else
+//	{
+//		--it;
+//		return (data_set.at(date) * std::strtof(value.c_str(),NULL));
+//	}
+//
+//}
+
+static bool	valid_value(const std::string &value_str)
 {
 	int	dot = 0;
 	size_t	i;
@@ -109,12 +153,12 @@ bool	valid_value(const std::string &value_str)
 		std::cerr << "Error: too large a number." << std::endl;
 		return false;
 	}
-	std::cout << "good nb =" << nb << std::endl;
+	//std::cout << "good nb =" << nb << std::endl;
 	return true;
 	
 }
 
-bool	valid_date(const std::string &date_str)
+static bool	valid_date(const std::string &date_str)
 {
 	//std::cout << "string = " << date_str << std::endl;
 	if (date_str.length() != 10)
@@ -171,13 +215,17 @@ void	BitcoinExchange::fromFile(const char *input_file)
 	}
 
 	std::string	line;
-	std::getline(file, line);
+	size_t		index = -1;
+	//std::getline(file, line);
 	while (std::getline(file, line))
 	{
+		++index;
+		if (line == "date | value" && index == 0)
+			continue;
 		size_t	pos = line.find(" | ");
-		if (pos == std::string::npos)
+		if (pos == std::string::npos || line.length() < 14)
 		{
-			std::cerr << "Error: bad input => " << line <<std::endl;
+			std::cerr << "Error: bad input => " << line << std::endl;
 			continue;
 		}
 		std::string	date = line.substr(0, pos);
@@ -185,13 +233,22 @@ void	BitcoinExchange::fromFile(const char *input_file)
 		
 		if (!valid_date(date))
 		{
-
-			std::cerr << "Error: invalid date =>" << date <<std::endl;
+			std::cerr << "Error: invalid date => " << date << std::endl;
 			continue;
 		}
 		if (!valid_value(value))
-		{
 			continue;
+		float	result = exchanger(date, value.c_str());
+		if (result < 0)
+		{
+			std::cerr << "Error: no date that early => " << date << std::endl;
+			continue;
+		}
+		else
+		{
+
+			//std::cout << find_date_or_lower(date)->first << " _ " << date << " => " << value << " = " << result << std::endl;
+			std::cout << date << " => " << value << " = " << result << std::endl;
 		}
 
 	}
