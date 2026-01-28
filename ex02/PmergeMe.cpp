@@ -11,10 +11,10 @@ PmergeMe::PmergeMe(const PmergeMe &other) { *this = other; }
 
 PmergeMe &PmergeMe::operator=(const PmergeMe &other)
 {
-	std::cout << "PmergeMe: Copy assignment operator called" << std::endl;
 	if (this != &other)
 	{
-		// Copy members here
+		vec = other.vec;
+		deq = other.deq;
 	}
 	return *this;
 }
@@ -54,6 +54,8 @@ bool	PmergeMe::parse_and_fill(size_t count, char **arg)
 	return true;
 }
 
+//******************DEQUE******************
+
 void PmergeMe::insertionSortDeque(std::deque<int> &vec)
 {
 	for (size_t i = 1; i < vec.size(); i++)
@@ -69,6 +71,108 @@ void PmergeMe::insertionSortDeque(std::deque<int> &vec)
 		vec[j + 1] = key;
 	}
 }
+
+
+static std::deque<size_t> build_jacob_deq(size_t max_pairs)
+{
+	std::deque<size_t>	jac;
+
+	jac.push_back(1);
+	jac.push_back(3);
+	while (jac.back() < max_pairs)
+		jac.push_back(jac[jac.size() - 1] + 2 * jac[jac.size() - 2]);
+	return (jac);
+}
+
+static std::deque<size_t> build_full_order_deq(size_t max_pairs)
+{
+	std::deque<size_t>	jac;
+	std::deque<size_t>	order;
+	size_t			prev;
+	size_t			curr;
+
+	jac = build_jacob_deq(max_pairs);
+	prev = 1;
+	for (size_t i = 0; i < jac.size(); i++)
+	{
+		curr = jac[i];
+		if (curr > max_pairs)
+			curr = max_pairs;
+		for (size_t j = curr; j > prev; j--)
+			order.push_back(j - 1);
+		prev = curr;
+	}
+	return (order);
+}
+
+static std::deque<size_t> get_jacob_order_deq(size_t max_pairs)
+{
+	static std::deque<size_t>	jacob_full_order;
+
+	if (jacob_full_order.empty())
+		jacob_full_order = build_full_order_deq(max_pairs);
+
+	return (jacob_full_order);
+}
+
+
+void PmergeMe::mergeInsertSortDeq(std::deque<int> &deq)
+{
+	if (deq.size() <= 1)
+		return;
+	if (deq.size() <= 16)
+	{
+		insertionSortDeque(deq);
+		return;
+	}
+	std::deque<std::pair<int, int> >	pairs;
+	size_t			i;
+	int			straggler = -1;
+	bool			hasStraggler = false;
+
+	for (i = 0; i + 1 < deq.size(); i += 2)
+	{
+		if (deq[i] > deq[i + 1])
+			pairs.push_back(std::make_pair(deq[i + 1], deq[i]));
+		else
+			pairs.push_back(std::make_pair(deq[i], deq[i + 1]));
+	}
+
+	if (i < deq.size())
+	{
+		straggler = deq[i];
+		hasStraggler = true;
+	}
+
+	std::deque<int> largerElements;
+	for (size_t j = 0; j < pairs.size(); j++)
+		largerElements.push_back(pairs[j].second);
+
+	mergeInsertSortDeq(largerElements);
+
+	std::deque<int>			&result = largerElements;
+	const std::deque<size_t>	&order = get_jacob_order_deq(pairs.size());
+
+	for (size_t k = 0; k < order.size(); k++)
+	{
+		size_t	j = order[k];
+		int	smaller = pairs[j].first;
+
+		std::deque<int>::iterator it = std::lower_bound(result.begin(), result.end(), smaller);
+		result.insert(it, smaller);
+	}
+
+	if (hasStraggler)
+	{
+		std::deque<int>::iterator it = std::lower_bound(result.begin(), result.end(), straggler);
+		result.insert(it, straggler);
+	}
+
+	deq = result;
+}
+
+
+//	******************VECTOR******************
 
 void PmergeMe::insertionSortVector(std::vector<int> &vec)
 {
@@ -86,124 +190,46 @@ void PmergeMe::insertionSortVector(std::vector<int> &vec)
 	}
 }
 
-std::deque<size_t>	JacobsthalOrderDeq(size_t pairCount)
+static std::vector<size_t> build_jacob_vec(size_t max_pairs)
 {
-	std::deque<size_t>	order;
-	std::deque<size_t>	jac;
-
-	if (pairCount <= 1)
-		return order;
-	jac.push_back(1);
-	jac.push_back(3);
-	while (jac.back() < pairCount)
-		jac.push_back(jac[jac.size() - 1] + 2 * jac[jac.size() - 2]);
-	size_t	prev = 1;
-	size_t	curr;
-
-	for (size_t i = 0; i < jac.size(); i++)
-	{
-		curr = jac[i];
-		if (curr > pairCount)
-			curr = pairCount;
-		for (size_t j = curr; j > prev; j--)
-			order.push_back(j - 1);
-		prev = curr;
-	}
-	return order;
-}
-
-std::vector<size_t>	JacobsthalOrderVec(size_t pairCount)
-{
-	std::vector<size_t>	order;
 	std::vector<size_t>	jac;
 
-	if (pairCount <= 1)
-		return order;
 	jac.push_back(1);
 	jac.push_back(3);
-	while (jac.back() < pairCount)
+	while (jac.back() < max_pairs)
 		jac.push_back(jac[jac.size() - 1] + 2 * jac[jac.size() - 2]);
-	size_t	prev = 1;
-	size_t	curr;
+	return (jac);
+}
 
+static std::vector<size_t> build_full_order_vec(size_t max_pairs)
+{
+	std::vector<size_t>	jac;
+	std::vector<size_t>	order;
+	size_t			prev;
+	size_t			curr;
+
+	jac = build_jacob_vec(max_pairs);
+	prev = 1;
 	for (size_t i = 0; i < jac.size(); i++)
 	{
 		curr = jac[i];
-		if (curr > pairCount)
-			curr = pairCount;
+		if (curr > max_pairs)
+			curr = max_pairs;
 		for (size_t j = curr; j > prev; j--)
 			order.push_back(j - 1);
 		prev = curr;
 	}
-	return order;
+	return (order);
 }
 
-void PmergeMe::mergeInsertSortDeq(std::deque<int> &deq)
+static std::vector<size_t> get_jacob_order_vec(size_t max_pairs) 
 {
-	if (deq.size() <= 1)
-		return;
+	static std::vector<size_t>	jacob_full_order;
 
-	if (deq.size() <= 16)
-	{
-		insertionSortDeque(deq);
-		return;
-	}
+	if (jacob_full_order.empty())
+		jacob_full_order = build_full_order_vec(max_pairs);
 
-	std::deque<std::pair<int, int> > pairs;
-	size_t i;
-
-	for (i = 0; i + 1 < deq.size(); i += 2)
-	{
-		if (deq[i] > deq[i + 1])
-			pairs.push_back(std::make_pair(deq[i + 1], deq[i]));
-		else
-			pairs.push_back(std::make_pair(deq[i], deq[i + 1]));
-	}
-
-	int straggler = -1;
-	bool hasStraggler = false;
-	if (i < deq.size())
-	{
-		straggler = deq[i];
-		hasStraggler = true;
-	}
-
-	std::deque<int> largerElements;
-	for (size_t j = 0; j < pairs.size(); j++)
-		largerElements.push_back(pairs[j].second);
-
-	mergeInsertSortDeq(largerElements);
-
-	std::deque<int>	result = largerElements;
-
-	std::deque<size_t>	order = JacobsthalOrderDeq(pairs.size());
-
-	for (size_t k = 0; k < order.size(); k++)
-	{
-	size_t j = order[k];
-		std::cout << "order = " << order[k] << std::endl;
-	int smaller = pairs[j].first;
-
-		std::deque<int>::iterator it = std::lower_bound(result.begin(), result.end(), smaller);
-	result.insert(it, smaller);
-	}
-
-//	for (size_t j = 0; j < pairs.size(); j++)
-//	{
-//		int smaller = pairs[j].first;
-//
-//		std::deque<int>::iterator it;
-//		it = std::lower_bound(result.begin(), result.end(), smaller);
-//		result.insert(it, smaller);
-//	}
-
-	if (hasStraggler)
-	{
-		std::deque<int>::iterator it = std::lower_bound(result.begin(), result.end(), straggler);
-		result.insert(it, straggler);
-	}
-
-	deq = result;
+	return (jacob_full_order);
 }
 
 
@@ -211,15 +237,15 @@ void PmergeMe::mergeInsertSortVec(std::vector<int> &vec)
 {
 	if (vec.size() <= 1)
 		return;
-
 	if (vec.size() <= 16)
 	{
 		insertionSortVector(vec);
 		return;
 	}
-
-	std::vector<std::pair<int, int> > pairs;
-	size_t i;
+	std::vector<std::pair<int, int> >	pairs;
+	size_t			i;
+	int			straggler = -1;
+	bool			hasStraggler = false;
 
 	for (i = 0; i + 1 < vec.size(); i += 2)
 	{
@@ -228,42 +254,29 @@ void PmergeMe::mergeInsertSortVec(std::vector<int> &vec)
 		else
 			pairs.push_back(std::make_pair(vec[i], vec[i + 1]));
 	}
-
-	int straggler = -1;
-	bool hasStraggler = false;
 	if (i < vec.size())
 	{
 		straggler = vec[i];
 		hasStraggler = true;
 	}
 
-	std::vector<int> largerElements;
+	std::vector<int>	largerElements;
 	for (size_t j = 0; j < pairs.size(); j++)
 		largerElements.push_back(pairs[j].second);
 
 	mergeInsertSortVec(largerElements);
 
-	std::vector<int>	result = largerElements;
-
-	std::vector<size_t>	order = JacobsthalOrderVec(pairs.size());
+	std::vector<int>	&result = largerElements; //doing that just so it's named result ngl
+	const std::vector<size_t>	&order = get_jacob_order_vec(pairs.size());
 
 	for (size_t k = 0; k < order.size(); k++)
 	{
-	size_t j = order[k];
-	int smaller = pairs[j].first;
+		size_t	j = order[k];
+		int	smaller = pairs[j].first;
 
 		std::vector<int>::iterator it = std::lower_bound(result.begin(), result.end(), smaller);
-	result.insert(it, smaller);
+		result.insert(it, smaller);
 	}
-
-//	for (size_t j = 0; j < pairs.size(); j++)
-//	{
-//		int smaller = pairs[j].first;
-//
-//		std::vector<int>::iterator it;
-//		it = std::lower_bound(result.begin(), result.end(), smaller);
-//		result.insert(it, smaller);
-//	}
 
 	if (hasStraggler)
 	{
@@ -301,6 +314,12 @@ void	PmergeMe::execute()
 	mergeInsertSortDeq(deq);
 	clock_t endDeq = clock();
 	double time_deq = static_cast<double>(endDeq - startDeq) / CLOCKS_PER_SEC * 1000000;
+
+	if (!is_sorted(vec) || !is_sorted(deq))
+	{
+		std::cerr << "Unsorted! what!?" << std::endl;
+		return;
+	}
 
 	print_vec("After ");
 	std::cout << "Time to process a range of " << vec.size()
