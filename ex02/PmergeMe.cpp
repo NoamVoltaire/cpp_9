@@ -1,11 +1,6 @@
 #include "PmergeMe.hpp"
-#include <cctype>
-//#include <cstdint>
-#include <iterator>
 #include <limits>
-#include <string>
 #include <cstdlib>
-//#include <limits.h>
 
 PmergeMe::PmergeMe() { }
 
