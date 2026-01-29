@@ -2,14 +2,9 @@
 
 int	main(int ac, char **av)
 {
-		BitcoinExchange	btc_exchgr;
+	BitcoinExchange	btc_exchgr;
 	if (ac == 2)
-	{
-
-		BitcoinExchange	btc_exchgar;
 		btc_exchgr.fromFile(av[1]);
-
-
-	}
-	(void)av;
+	else
+		std::cerr << "Error: could not open file." << std::endl;
 }

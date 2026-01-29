@@ -1,7 +1,11 @@
 #include "PmergeMe.hpp"
 #include <cctype>
+//#include <cstdint>
 #include <iterator>
+#include <limits>
 #include <string>
+#include <cstdlib>
+//#include <limits.h>
 
 PmergeMe::PmergeMe() { }
 
@@ -32,24 +36,16 @@ bool	PmergeMe::parse_and_fill(size_t count, char **arg)
 			}
 			j++;
 		}
-		int	res;
+		long	res;
 
-		try 
+		res = std::atol(arg[i]);
+		if (res < 0 || res > std::numeric_limits<int>::max())
 		{
-			res = std::stoi(arg[i]);
-		}
-		catch (const std::exception &e)
-		{
-			std::cerr << e.what() << std::endl;
+			std::cerr << "Error : program only accepts positive int" << std::endl;
 			return false;
 		}
-		if (res < 0)
-		{
-			std::cerr << "Error : program only positive int" << std::endl;
-			return false;
-		}
-		vec.push_back(res);
-		deq.push_back(res);
+		vec.push_back(static_cast<int>(res));
+		deq.push_back(static_cast<int>(res));
 	}
 	return true;
 }

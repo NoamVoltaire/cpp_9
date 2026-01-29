@@ -8,7 +8,6 @@
 
 bool	BitcoinExchange::set_btc_dataset(const char *path)
 {
-	//std::cout << path << std::endl;
 	std::ifstream	file(path);
 	if (!file.is_open())
 	{
@@ -30,9 +29,6 @@ bool	BitcoinExchange::set_btc_dataset(const char *path)
 		float	value = std::atof(valuestr.c_str());
 		data_set[date] = value;
 	}
-	//std::cout << "THIS IS IT " << this->data_set.cbegin()->first << " and " << this->data_set.cbegin()->second << std::endl;
-	//std::cout << "THIS IS IT " << this->data_set.begin()->first << this->data_set.begin()->second << std::endl;
-
 	file.close();
 	return true;
 }
@@ -41,25 +37,14 @@ BitcoinExchange::BitcoinExchange()
 {
 	if (!set_btc_dataset("data.csv"))
 		throw std::runtime_error("Error : data.csv is not valid") ;
-		//std::cerr << "uh oh"  << std::endl;
-		//throw error;
-	//std::cout << "BitcoinExchange: Default constructor called" << std::endl;
 }
 
-BitcoinExchange::~BitcoinExchange()
-{
-	//std::cout << "BitcoinExchange: Destructor called" << std::endl;
-}
+BitcoinExchange::~BitcoinExchange() { }
 
-BitcoinExchange::BitcoinExchange(const BitcoinExchange &other)
-{
-	//std::cout << "BitcoinExchange: Copy constructor called" << std::endl;
-	*this = other;
-}
+BitcoinExchange::BitcoinExchange(const BitcoinExchange &other) { *this = other; }
 
 BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
 {
-	//std::cout << "BitcoinExchange: Copy assignment operator called" << std::endl;
 	if (this != &other)
 	{
 		this->data_set = other.data_set;
@@ -68,23 +53,13 @@ BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &other)
 }
 
 
-//BitcoinExchange::BitcoinExchange(const std::string &input_file)
-//{
-
-	//see first data base
-	//fill map
-	//see input file
-	//
-
-//}
-
 std::map<std::string, float>::const_iterator	BitcoinExchange::find_date_or_lower(const std::string &date) const
 {
 	std::map<std::string, float>::const_iterator it = data_set.lower_bound(date);
 
 	if (it != data_set.end() && it->first == date)
 		return (it);
-	else if (it == data_set.begin())
+	else if (it == data_set.begin())	//	if true it means that date lower than what exist
 		it = data_set.end();
 	else
 		--it;
@@ -103,22 +78,6 @@ float	BitcoinExchange::exchanger(const std::string &date, const char *value) con
 		return (it->second * std::strtof(value, NULL));
 }
 
-//float	BitcoinExchange::exchanger(const std::string &date, const std::string &value) const
-//{
-//	std::map<std::string, float>::const_iterator it = data_set.lower_bound(date);
-//
-//	if (it->first == date)
-//		return (data_set.at(date) * std::strtof(value.c_str(),NULL));
-//	else if (it == data_set.begin())
-//		return (-1);
-//	else
-//	{
-//		--it;
-//		return (data_set.at(date) * std::strtof(value.c_str(),NULL));
-//	}
-//
-//}
-
 static bool	valid_value(const std::string &value_str)
 {
 	int	dot = 0;
@@ -129,7 +88,6 @@ static bool	valid_value(const std::string &value_str)
 	{
 		if (!std::isdigit(value_str[i]))
 		{
-			//if (value_str[i] == '.' && dot < 1)
 			if (value_str[i] == '.' && dot < 1)
 				dot++;
 			else 
@@ -153,14 +111,12 @@ static bool	valid_value(const std::string &value_str)
 		std::cerr << "Error: too large a number." << std::endl;
 		return false;
 	}
-	//std::cout << "good nb =" << nb << std::endl;
 	return true;
 	
 }
 
 static bool	valid_date(const std::string &date_str)
 {
-	//std::cout << "string = " << date_str << std::endl;
 	if (date_str.length() != 10)
 		return false;
 	std::string::size_type	posym = date_str.find_first_of("-");
@@ -179,7 +135,6 @@ static bool	valid_date(const std::string &date_str)
 	int	month = std::atoi(date_str.substr(posym + 1, posmd).c_str());
 	int	day = std::atoi(date_str.substr(posmd + 1).c_str());
 
-	//std::cout << year << " "<< month << " " <<  day << std::endl;
 	if (day > 31 || month > 12 || month < 1 || day < 1)
 		return false;
 	if (month == 4 || month == 6 || month == 9 || month == 11)
@@ -187,8 +142,6 @@ static bool	valid_date(const std::string &date_str)
 			return false;
 	if (month == 2)
 	{
-		//if (!(year % 4) && (year % 100) && !(year % 400))
-		//if (((year % 400) && (year %100)) && !(year % 4)) 
 		if (!(year % 400) || (!(year % 4) && (year % 100)))
 		{
 			if (day > 29)
@@ -213,10 +166,9 @@ void	BitcoinExchange::fromFile(const char *input_file)
 		std::cerr << "Error: could not open file." << std::endl;
 		return ;
 	}
-
 	std::string	line;
 	size_t		index = -1;
-	//std::getline(file, line);
+
 	while (std::getline(file, line))
 	{
 		++index;
@@ -245,11 +197,7 @@ void	BitcoinExchange::fromFile(const char *input_file)
 			continue;
 		}
 		else
-		{
-
-			//std::cout << find_date_or_lower(date)->first << " _ " << date << " => " << value << " = " << result << std::endl;
 			std::cout << date << " => " << value << " = " << result << std::endl;
-		}
 
 	}
 

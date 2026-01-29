@@ -11,9 +11,7 @@ RPN::RPN(const RPN &other) { *this = other; }
 RPN &RPN::operator=(const RPN &other)
 {
 	if (this != &other)
-	{
-		// Copy members here
-	}
+		this->stack = other.stack;
 	return *this;
 }
 
