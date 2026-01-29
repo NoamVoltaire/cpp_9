@@ -8,12 +8,15 @@ int	main(int ac, char **av)
 
 	if (ac ==2)
 	{
-		rpn.calculate(av[1]);
+		if (!rpn.calculate(av[1]))
+			return (1);
+
 	}
 	else
 	{
 		std::cerr << "Error : only accepts 1 arg" << std::endl;
-		return 1;
+		return (1);
 	}
 
+	return (0);
 }

@@ -15,7 +15,7 @@ public:
 	RPN(const RPN &other);
 	RPN &operator=(const RPN &other);
 
-	int	calculate(const std::string &sequence);
+	bool	calculate(const std::string &sequence);
 	void	do_operation(const char &op);
 };
 
