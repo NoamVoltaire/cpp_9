@@ -20,23 +20,36 @@ PmergeMe &PmergeMe::operator=(const PmergeMe &other)
 
 bool	PmergeMe::parse_and_fill(size_t count, char **arg)
 {
+	if (!arg[0][0])
+	{
+		std::cerr << "Error: empty arg" << std::endl;
+		return false;
+	}
 	for (size_t i = 0 ; i < count ; i++)
 	{
 		for (size_t j = 0 ; arg[i][j];)
 		{
 			if (!std::isdigit(arg[i][j]))
 			{
-				std::cerr << "Error : program only accepts numbers" << std::endl;
+				std::cerr << "Error: program only accepts number characters" << std::endl;
 				return false;
 			}
 			j++;
 		}
 		long	res;
 
-		res = std::atol(arg[i]);
+		try
+		{
+			res = std::atol(arg[i]);
+		}
+		catch (const std::exception &e)
+		{	
+			return false;
+		}
+
 		if (res < 0 || res > std::numeric_limits<int>::max())
 		{
-			std::cerr << "Error : program only accepts positive int" << std::endl;
+			std::cerr << "Error: program only accepts up to positive int" << std::endl;
 			return false;
 		}
 		vec.push_back(static_cast<int>(res));
@@ -298,19 +311,13 @@ void	PmergeMe::execute()
 
 	struct timespec start, end;
 	clock_gettime(CLOCK_MONOTONIC, &start);
-	//clock_t startVec = clock();
 	mergeInsertSortVec(vec);
 	clock_gettime(CLOCK_MONOTONIC, &end);
 	double time_vec = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_nsec - start.tv_nsec) /1000.0;
-	//clock_t endVec = clock();
-	//double time_vec = static_cast<double>(endVec - startVec) / CLOCKS_PER_SEC * 1000000;
 
-	//clock_t startDeq = clock();
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	mergeInsertSortDeq(deq);
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	//clock_t endDeq = clock();
-	//double time_deq = static_cast<double>(endDeq - startDeq) / CLOCKS_PER_SEC * 1000000;
 	double time_deq = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_nsec - start.tv_nsec) /1000.0;
 
 	if (!is_sorted(vec) || !is_sorted(deq))
