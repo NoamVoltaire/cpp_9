@@ -296,15 +296,22 @@ void	PmergeMe::execute()
 
 	print_vec("Before ");
 
-	clock_t startVec = clock();
+	struct timespec start, end;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	//clock_t startVec = clock();
 	mergeInsertSortVec(vec);
-	clock_t endVec = clock();
-	double time_vec = static_cast<double>(endVec - startVec) / CLOCKS_PER_SEC * 1000000;
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	double time_vec = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_nsec - start.tv_nsec) /1000.0;
+	//clock_t endVec = clock();
+	//double time_vec = static_cast<double>(endVec - startVec) / CLOCKS_PER_SEC * 1000000;
 
-	clock_t startDeq = clock();
+	//clock_t startDeq = clock();
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	mergeInsertSortDeq(deq);
-	clock_t endDeq = clock();
-	double time_deq = static_cast<double>(endDeq - startDeq) / CLOCKS_PER_SEC * 1000000;
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	//clock_t endDeq = clock();
+	//double time_deq = static_cast<double>(endDeq - startDeq) / CLOCKS_PER_SEC * 1000000;
+	double time_deq = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_nsec - start.tv_nsec) /1000.0;
 
 	if (!is_sorted(vec) || !is_sorted(deq))
 	{
